@@ -6,7 +6,7 @@ import herramientas
 import afd, afnd
 
 mi_afd = afd.AFD()
-#mi_afnd = afnd.AFND()
+mi_afnd = afnd.AFN()
 def cargar_automata_archivo():
     ruta = filedialog.askopenfilename(
         title="Seleccionar Autómata",
@@ -102,38 +102,33 @@ def probar_cadena():
     valido, camino = mi_afd.validate_string(cadena)
     color = "green" if valido else "red"
     lbl_res_afd.config(text=f"Resultado: {'Aceptada' if valido else 'Rechazada'}\nRuta: {camino}", fg=color)
-    
-def probar_cadena():
+
+def probar_cadena_afnd():
     cadena = entry_probar.get()
     
-    # Obtenemos el resultado booleano y la LISTA de pasos
-    valido, pasos = mi_afd.validate_string(cadena)
+    # Asumiendo que mi_afnd tiene el método de validación
+    valido, pasos = mi_afnd.validate_string_afn(cadena)
 
-    # 1. El Label SOLO muestra el resultado (Aceptada/Rechazada)
+    # Actualizar Label de resultado
     color = "green" if valido else "red"
-    lbl_res_afd.config(
-        text=f"Resultado: {'Válido' if valido else 'Inválido'}",
-        fg=color
-    )
+    lbl_res_afnd.config(text=f"Resultado: {'ACEPTADA' if valido else 'RECHAZADA'}", fg=color)
 
-    # 2. Mostramos los pasos en el ScrolledText (tu "tabla")
-    # Asegúrate de que el nombre del widget sea el que tú usas (ej. txt_analisis)
-    txt_analisis.config(state="normal") # Habilitar edición
-    txt_analisis.delete(1.0, "end")    # Limpiar lo anterior
+    # Actualizar Tabla de análisis
+    txt_analisis_afnd.config(state="normal")
+    txt_analisis_afnd.delete(1.0, tk.END)
     
-    txt_analisis.insert("end", f"ANÁLISIS DE LA CADENA: '{cadena}'\n")
-    txt_analisis.insert("end", "="*45 + "\n\n")
+    txt_analisis_afnd.insert(tk.END, f"ANÁLISIS AFND - Cadena: '{cadena}'\n")
+    txt_analisis_afnd.insert(tk.END, "="*50 + "\n")
 
-    # Recorremos la lista de pasos para imprimirlos uno por uno
     for p in pasos:
-        txt_analisis.insert("end", f"PASO {p['paso']}:\n")
-        txt_analisis.insert("end", f"  Estado Actual: \t{p['estado']}\n")
-        txt_analisis.insert("end", f"  Símbolo Leído: \t{p['leer']}\n")
-        txt_analisis.insert("end", f"  Restante:      \t{p['cadena_restante']}\n")
-        txt_analisis.insert("end", f"  Operación:     \t{p['info']}\n")
-        txt_analisis.insert("end", "-"*30 + "\n")
+        txt_analisis_afnd.insert(tk.END, f"Paso {p['paso']}:\n")
+        txt_analisis_afnd.insert(tk.END, f"  Símbolo leído: \t{p['leer']}\n")
+        # Mostramos todos los estados en los que está el autómata al mismo tiempo
+        txt_analisis_afnd.insert(tk.END, f"  Estados actuales: \t{p['estados']}\n")
+        txt_analisis_afnd.insert(tk.END, f"  Detalle: \t{p['info']}\n")
+        txt_analisis_afnd.insert(tk.END, "-"*40 + "\n")
 
-    txt_analisis.config(state="disabled") 
+    txt_analisis_afnd.config(state="disabled")
 
 def validate_string(self):
     input_string = self.input_string_var.get()
@@ -258,7 +253,6 @@ txt_analisis = scrolledtext.ScrolledText(tab_tools, height=15, width=80)
 txt_analisis.pack(pady=10, padx=20)
 
 # --- PESTAÑA 3: AFD ---
-
 tab_afd = tk.Frame(notebook, bg="white")
 notebook.add(tab_afd, text=" Definir AFD ")
 f_acciones = tk.Frame(tab_afd, bg="white")
@@ -326,5 +320,58 @@ lbl_res_afd.pack(pady=10)
 btn_cargar = tk.Button(f_acciones, text="Minimizar", command=ejecutar_minimizacion, 
                        bg="#cc9a2e", fg="white", width=12)
 btn_cargar.pack(side="left", padx=5)
+
+
+# --- PESTAÑA 4: AFND ---
+tab_afnd = tk.Frame(notebook, bg="white")
+notebook.add(tab_afnd, text=" Definir AFND ")
+
+f_acciones = tk.Frame(tab_afnd, bg="white")
+f_acciones.pack(fill="x", padx=10, pady=5)
+
+# Botones superiores
+tk.Button(f_acciones, text="Cargar", command=cargar_automata_archivo, bg="#2ecc71", fg="white", width=12).pack(side="left", padx=5)
+tk.Button(f_acciones, text="Guardar", command=guardar_automata_archivo, bg="#3498db", fg="white", width=12).pack(side="left", padx=5)
+tk.Button(f_acciones, text="Limpiar", command=limpiar_interfaz_y_datos, bg="#e74c3c", fg="white", width=12).pack(side="left", padx=5)
+#tk.Button(f_acciones, text="Convertir a AFD", command=convertir_afnd_a_afd, bg="#9b59b6", fg="white", width=12).pack(side="left", padx=5)
+
+# 1. Agregar Estados
+f_estados = ttk.LabelFrame(tab_afnd, text=" 1. Agregar Estados ")
+f_estados.pack(fill="x", padx=10, pady=5)
+tk.Label(f_estados, text="Nombre:").grid(row=0, column=0, padx=5)
+entry_estado_nombre = tk.Entry(f_estados, width=10)
+entry_estado_nombre.grid(row=0, column=1, padx=5)
+var_es_inicial = tk.BooleanVar()
+tk.Checkbutton(f_estados, text="Inicial", variable=var_es_inicial).grid(row=0, column=2)
+var_es_final = tk.BooleanVar()
+tk.Checkbutton(f_estados, text="Final", variable=var_es_final).grid(row=0, column=3)
+tk.Button(f_estados, text="Añadir", command=agregar_estado_interfaz).grid(row=0, column=4, padx=10)
+
+# 2. Definir Transiciones
+f_trans = ttk.LabelFrame(tab_afnd, text=" 2. Definir Transiciones ")
+f_trans.pack(fill="x", padx=10, pady=5)
+cb_desde = ttk.Combobox(f_trans, width=10, state="readonly")
+cb_desde.grid(row=0, column=0, padx=5)
+tk.Label(f_trans, text="--").grid(row=0, column=1)
+entry_simbolo = tk.Entry(f_trans, width=5) # Vacío para epsilon/lambda
+entry_simbolo.grid(row=0, column=2, padx=5)
+tk.Label(f_trans, text="-->").grid(row=0, column=3)
+cb_hacia = ttk.Combobox(f_trans, width=10, state="readonly")
+cb_hacia.grid(row=0, column=4, padx=5)
+tk.Button(f_trans, text="Asignar", command=agregar_transicion_interfaz).grid(row=0, column=5, padx=10)
+
+# 3. Probar Cadena
+f_prueba = ttk.LabelFrame(tab_afnd, text=" 3. Probar Cadena ")
+f_prueba.pack(fill="x", padx=10, pady=5)
+entry_probar = tk.Entry(f_prueba)
+entry_probar.pack(side="left", padx=10, pady=5, expand=True, fill="x")
+tk.Button(f_prueba, text="Validar", command=probar_cadena_afnd).pack(side="right", padx=10)
+
+# 4. Resultados y Reporte (La "Tabla")
+lbl_res_afnd = tk.Label(tab_afnd, text="Resultado: -", font=("Arial", 10, "bold"), bg="white")
+lbl_res_afnd.pack(pady=5)
+
+txt_analisis_afnd = scrolledtext.ScrolledText(tab_afnd, height=10, font=("Consolas", 10))
+txt_analisis_afnd.pack(fill="both", padx=10, pady=5, expand=True)
 
 root.mainloop()
