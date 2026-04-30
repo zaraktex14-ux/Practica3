@@ -200,7 +200,7 @@ pip install graphviz
 Ejecutar el programa:
 
 ```bash
-python practica3.py
+py main.py
 ```
 ---
 
